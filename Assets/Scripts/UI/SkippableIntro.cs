@@ -17,13 +17,12 @@ namespace RyanGQ.RunOrDie.UI
 
         private readonly string[] IntroLines = new string[]
         {
-            "When you die, you become a ghost.",
-            "You thought it would be easy.",
+            "When you died, you became a ghost.",
             "But on the way to heaven, you realize:",
             "The end was much further than you thought.",
             "The reaper has you trapped, forever fighting to leave.",
             "He says, \"welcome, little ghost.\"",
-            "The time to fight the curse has come."
+            "The time to fight my curse has come."
         };
         private int _introState = -1;
 
@@ -54,13 +53,13 @@ namespace RyanGQ.RunOrDie.UI
             {
                 IntroTextGroup.alpha = 0f;
                 IntroText.text = IntroLines[_introState];
-                while(IntroTextGroup.alpha < 0.97f)
+                while(IntroTextGroup.alpha < 0.995f)
                 {
                     IntroTextGroup.alpha = Mathf.Lerp(IntroTextGroup.alpha, 1f, Time.deltaTime * 3f);
                     yield return null;
                 }
                 yield return new WaitForSeconds(1.66f);
-                while(IntroTextGroup.alpha > 0.03f)
+                while(IntroTextGroup.alpha > 0.005f)
                 {
                     IntroTextGroup.alpha = Mathf.Lerp(IntroTextGroup.alpha, 0f, Time.deltaTime * 3f);
                     yield return null;

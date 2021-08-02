@@ -8,9 +8,7 @@ namespace RyanGQ.RunOrDie.Player
     public class PlayerController : MonoBehaviour
     {
         [SerializeField] Rigidbody Body;
-        public Transform CameraTransform;
-        
-        private float _cameraY;
+        public PlayerCamera Camera;
         private Vector2 _movement
         {
             get
@@ -55,6 +53,10 @@ namespace RyanGQ.RunOrDie.Player
 
             // Detect ground / falling through map.
             _grounded = Physics.Raycast(transform.position, Vector3.down, out RaycastHit ground, 1.1f);
+            if (!_grounded)
+                _grounded = Physics.Raycast(transform.position + (transform.right * 0.35f), Vector3.down, out ground, 1.1f);
+            if (!_grounded)
+                _grounded = Physics.Raycast(transform.position + (transform.right * -0.35f), Vector3.down, out ground, 1.1f);
             if (transform.position.y <= -15f)
             {
                 if (Sync.IsReaper)
@@ -73,13 +75,12 @@ namespace RyanGQ.RunOrDie.Player
                     _sprinting = !_sprinting;
 
                 transform.localEulerAngles += new Vector3(0f, Input.GetAxis("Mouse X") * OptionsMenu.Sensitivity / OptionsMenu.MouseDivisorX);
-                _cameraY = Mathf.Clamp(_cameraY - (Input.GetAxis("Mouse Y") * OptionsMenu.Sensitivity / OptionsMenu.MouseDivisorY), -75f, 75f);
-                CameraTransform.localEulerAngles = new Vector3(_cameraY, 0f);
-                CameraTransform.localPosition = new Vector3(0f, 1.25f + (_cameraY / 35f), -3f + (Mathf.Abs(_cameraY) / 45f));
+                Camera.Apply(Input.GetAxis("Mouse Y") * OptionsMenu.Sensitivity / OptionsMenu.MouseDivisorY);
+                
             
                 if (Sync.IsReaper)
                 {
-                    if(Input.GetKeyDown(KeyCode.F) && Physics.Raycast(CameraTransform.position, CameraTransform.forward, out RaycastHit button, 6f, 1 << LayerMask.NameToLayer("Button")))
+                    if(Input.GetKeyDown(KeyCode.F) && Physics.Raycast(Camera.transform.position, Camera.transform.forward, out RaycastHit button, 20f, 1 << LayerMask.NameToLayer("Button")))
                     {
                         if(button.collider.TryGetComponent(out TrapActivator activator))
                         {
@@ -88,7 +89,7 @@ namespace RyanGQ.RunOrDie.Player
                     }
                     if (!_blinderUsed)
                     {
-                        if (Input.GetKeyDown(KeyCode.G) && Physics.Raycast(CameraTransform.position, CameraTransform.forward, out RaycastHit ghost, 25f, 1 << LayerMask.NameToLayer("Ghost")))
+                        if (Input.GetKeyDown(KeyCode.G) && Physics.Raycast(Camera.transform.position, Camera.transform.forward, out RaycastHit ghost, 40f, 1 << LayerMask.NameToLayer("Ghost")))
                         {
                             {
                                 if (ghost.collider.transform.root.TryGetComponent(out PlayerSync player))
@@ -105,62 +106,72 @@ namespace RyanGQ.RunOrDie.Player
             }
 
             // Animations.
-            Sync.Animator.SetBool("Walk", _walking);
-            Sync.Animator.SetBool("Run", _sprinting);
-            Sync.Animator.SetBool("Grounded", _grounded);
-
-            if(!Sync.IsReaper && !GameManager.Singleton.Intro.IsRunning)
+            if (Sync.Animator != null)
             {
-                _movementDelta = Vector3.Distance(transform.position, _positionCache);
-                _movementCumulative = Mathf.Clamp(_movementCumulative + _movementDelta, 0f, 5f);
-                _positionCache = transform.position;
-
-                if (!_hasMoved && _movementDelta >= 1f)
-                {
-                    _hasMoved = true;
-                    _movementCumulative = 5f;
-                }
-
-                _movementCumulative = Mathf.MoveTowards(_movementCumulative, 0f, Time.deltaTime);
-                GameManager.Singleton.CurseIndicator.alpha = Mathf.Clamp01(1f - (_movementCumulative / 5f));
-                if(_movementCumulative == 0f)
-                {
-                    Sync.DieRPC();
-                }
+                Sync.Animator.SetBool("Walk", _walking);
+                Sync.Animator.SetBool("Run", _sprinting);
+                Sync.Animator.SetBool("Grounded", _grounded);
             }
 
-            if(Input.GetKey(KeyCode.Mouse0) && Time.time - _lastShoot >= 0.25f)
+            if(!GameManager.Singleton.IsPaused)
             {
-                _lastShoot = Time.time;
-                GameManager.Singleton.Sync.photonView.RPC(
-                    "FireBulletRPC",
-                    Photon.Pun.RpcTarget.All,
-                    CameraTransform.position,
-                    CameraTransform.forward,
-                    Sync.photonView.Owner.UserId
-                );
+                if (!Sync.IsReaper)
+                {
+                    _movementDelta = Vector3.Distance(transform.position, _positionCache);
+                    _movementCumulative = Mathf.Clamp(_movementCumulative + _movementDelta, 0f, 7.5f);
+                    _positionCache = transform.position;
+
+                    if (!_hasMoved && _movementDelta >= 1f)
+                    {
+                        _hasMoved = true;
+                        _movementCumulative = 7.5f;
+                    }
+
+                    _movementCumulative = Mathf.MoveTowards(_movementCumulative, 0f, Time.deltaTime / 4f);
+                    GameManager.Singleton.CurseIndicator.alpha = Mathf.Clamp01(1f - (_movementCumulative / 7.5f));
+                    if (_movementCumulative == 0f)
+                    {
+                        Sync.DieRPC();
+                    }
+                }
+
+                if (Input.GetKey(KeyCode.Mouse0) && Time.time - _lastShoot >= 0.25f)
+                {
+                    _lastShoot = Time.time;
+                    GameManager.Singleton.Sync.photonView.RPC(
+                        "FireBulletRPC",
+                        Photon.Pun.RpcTarget.All,
+                        Camera.transform.position + (Camera.transform.forward * (-Camera.transform.localPosition.z + 0.4f)),
+                        Camera.transform.forward,
+                        Sync.photonView.Owner.UserId
+                    );
+                }
             }
         }
 
         private void FixedUpdate()
         {
             // Apply force.
-            Body.AddForce(Physics.gravity * 2f, ForceMode.Force);
+            Body.AddForce(Physics.gravity * 2.33f, ForceMode.Force);
 
             if (!GameManager.Singleton.IsPaused)
             {
                 _movement = new Vector2(
-                    Input.GetAxis("Horizontal") * 40f,
-                    Input.GetAxis("Vertical") * 40f
+                    Input.GetAxis("Horizontal") * (Sync.IsReaper ? 55f : 30f),
+                    Input.GetAxis("Vertical") * (Sync.IsReaper ? 55f : 30f)
                 );
 
                 if (_sprinting)
                     _movementCache.y *= 1.5f;
 
                 if (!_grounded)
-                    _movementCache *= 0.775f;
+                    _movementCache *= 0.6f;
 
                 Body.AddForce((transform.right * _movement.x) + (transform.forward * _movement.y), ForceMode.Force);
+            }
+            else
+            {
+                _movement = Vector2.zero;
             }
         }
     }

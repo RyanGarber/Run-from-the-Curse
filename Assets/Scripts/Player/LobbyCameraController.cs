@@ -73,9 +73,14 @@ namespace RyanGQ.RunOrDie.Player {
 
         void OnEnable()
         {
-            m_TargetCameraState.SetFromTransform(transform);
-            m_InterpolatingCameraState.SetFromTransform(transform);
+            if(Logic.GameManager.Singleton != null)
+            {
+                m_TargetCameraState.SetFromTransform(Logic.GameManager.Singleton.ReaperSpawn);
+                m_InterpolatingCameraState.SetFromTransform(Logic.GameManager.Singleton.ReaperSpawn);
+            }
         }
+
+        public void Init() => OnEnable();
 
         Vector3 GetInputTranslationDirection()
         {

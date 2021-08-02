@@ -43,6 +43,7 @@ namespace RyanGQ.RunOrDie.UI
             // Load nickname and connect.
             if(PhotonNetwork.CurrentRoom != null)
             {
+                Main.SetActive(false);
                 Match.SetActive(true);
                 UpdatePlayerList();
             }

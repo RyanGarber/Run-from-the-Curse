@@ -30,7 +30,8 @@ namespace RyanGQ.RunOrDie.Player
             {
                 if (collision.transform.root.TryGetComponent(out PlayerSync player))
                 {
-                    player.photonView.RPC("DieRPC", player.photonView.Owner);
+                    GameManager.Singleton.Crosshair.color = Color.red;
+                    player.photonView.RPC("DamageRPC", player.photonView.Owner);
                 }
             }
             Reset();

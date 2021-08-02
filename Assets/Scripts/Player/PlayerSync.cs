@@ -12,12 +12,13 @@ namespace RyanGQ.RunOrDie.Player
         [SerializeField] GameObject GhostBody;
         [SerializeField] GameObject ReaperBody;
         public Animator Animator;
+        public float Health = 100f;
 
         public bool IsReaper
         {
             get
             {
-                return photonView.Owner.UserId == GameManager.Singleton.Sync.Reaper;
+                return photonView.Owner.UserId == GameManager.Singleton.Sync.ReaperID;
             }
         }
 
@@ -26,7 +27,7 @@ namespace RyanGQ.RunOrDie.Player
             GameManager.Singleton.Sync.Players.Add(photonView.Owner.UserId, this);
             if (photonView.IsMine)
             {
-                GameManager.Singleton.Crosshair.SetActive(true);
+                GameManager.Singleton.Crosshair.gameObject.SetActive(true);
             }
 
             if (IsReaper)
@@ -44,26 +45,35 @@ namespace RyanGQ.RunOrDie.Player
         }
 
         [PunRPC]
+        public void DamageRPC()
+        {
+            Health -= 20f;
+            if(Health <= 0f)
+            {
+                DieRPC();
+            }
+        }
+
+        [PunRPC]
         public void DieRPC()
         {
-            GameManager.Singleton.Sync.Players.Remove(photonView.Owner.UserId);
-            GameManager.Singleton.LobbyCamera.SetActive(true);
-            GameManager.Singleton.Crosshair.SetActive(false);
-            GameManager.Singleton.Blinder.SetActive(false);
-            GameManager.Singleton.CurseIndicator.gameObject.SetActive(false);
-            GameManager.Singleton.GhostHelpText.SetActive(false);
-            GameManager.Singleton.ReaperHelpText.SetActive(false);
-
             if (photonView.IsMine)
             {
+                GameManager.Singleton.Sync.Players.Remove(photonView.Owner.UserId);
+                GameManager.Singleton.LobbyCamera.SetActive(true);
+                GameManager.Singleton.Crosshair.gameObject.SetActive(false);
+                GameManager.Singleton.Blinder.SetActive(false);
+                GameManager.Singleton.CurseIndicator.gameObject.SetActive(false);
+                GameManager.Singleton.GhostHelpText.SetActive(false);
+                GameManager.Singleton.ReaperHelpText.SetActive(false);
+            
                 if (IsReaper)
                 {
                     GameManager.Singleton.Sync.photonView.RPC("GameEndedRPC", RpcTarget.AllBufferedViaServer, (byte)GameEndReason.ReaperDead);
                 }
                 else
                 {
-                    // Should we use .Where(p => !p.IsReaper).Count == 0?
-                    if(GameManager.Singleton.Sync.Players.Count == 1)
+                    if(GameManager.Singleton.Sync.Ghosts.Count == 0)
                         GameManager.Singleton.Sync.photonView.RPC("GameEndedRPC", RpcTarget.AllBufferedViaServer, (byte)GameEndReason.AllGhostsDead);
                 }
                 PhotonNetwork.Destroy(gameObject);
@@ -88,7 +98,14 @@ namespace RyanGQ.RunOrDie.Player
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
         {
-
+            if(stream.IsWriting)
+            {
+                stream.SendNext(Health);
+            }
+            else
+            {
+                Health = (float) stream.ReceiveNext();
+            }
         }
 
         public override int GetHashCode()

@@ -18,7 +18,7 @@ namespace RyanGQ.RunOrDie.Logic
         public Text WaitingText;
         public GameObject ReaperHelpText;
         public GameObject GhostHelpText;
-        public GameObject Crosshair;
+        public Image Crosshair;
         public GameObject Blinder;
         public OptionsMenu Options;
         public SkippableIntro Intro;
@@ -43,6 +43,7 @@ namespace RyanGQ.RunOrDie.Logic
         private void Awake()
         {
             Singleton = this;
+            LobbyCamera.GetComponent<LobbyCameraController>().Init();
         }
 
         private void Start()
@@ -67,6 +68,7 @@ namespace RyanGQ.RunOrDie.Logic
 
             OptionsGroup.alpha = Mathf.MoveTowards(OptionsGroup.alpha, _optionsAlpha, Time.deltaTime * 5f);
             Options.gameObject.SetActive(OptionsGroup.alpha > float.Epsilon);
+            Crosshair.color = Color.Lerp(Crosshair.color, Color.white, Time.deltaTime * 2f);
             Cursor.lockState = OptionsGroup.alpha > float.Epsilon ? CursorLockMode.None : CursorLockMode.Locked;
         }
     }

@@ -10,11 +10,15 @@ namespace RyanGQ.RunOrDie.Logic
     {
         public ITrap Trap;
         public MeshRenderer Button;
+        public Material ActivatedButton;
 
         public void Activate()
         {
             Debug.Log("Activating " + Trap.name);
+            if (Trap.IsActivated)
+                return;
             Trap.photonView.RPC("Activate", RpcTarget.AllBufferedViaServer);
+            Button.material = ActivatedButton;
         }
     }
 }

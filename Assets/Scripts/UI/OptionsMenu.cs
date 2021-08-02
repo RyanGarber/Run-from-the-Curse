@@ -59,8 +59,20 @@ namespace RyanGQ.RunOrDie.UI
             int resolution = PlayerPrefs.GetInt("Resolution", _resolutionDefault);
             foreach (Resolution r in Screen.resolutions)
                 _allowedResolutions.Add(new int[] { r.width, r.height });
-            ResolutionState.text = _allowedResolutions[resolution][0] + "x" + _allowedResolutions[resolution][1];
-            Screen.SetResolution(_allowedResolutions[resolution][0], _allowedResolutions[resolution][1], Screen.fullScreen);
+            System.Action apply = () =>
+            {
+                ResolutionState.text = _allowedResolutions[resolution][0] + "x" + _allowedResolutions[resolution][1];
+                Screen.SetResolution(_allowedResolutions[resolution][0], _allowedResolutions[resolution][1], Screen.fullScreen);
+            };
+            try
+            {
+                apply.Invoke();
+            } catch(System.ArgumentOutOfRangeException e)
+            {
+                Debug.LogError("Tried applying resolution #" + resolution + " out of " + _allowedResolutions.Count + " but it failed, going to default");
+                resolution = _resolutionDefault;
+                apply.Invoke();
+            }
 
             int sensitivity = PlayerPrefs.GetInt("Sensitivity", _sensitivityDefault);
             SensitivityState.text = sensitivity + "%";
@@ -91,7 +103,7 @@ namespace RyanGQ.RunOrDie.UI
         public void OnResolutionChange()
         {
             int resolution = PlayerPrefs.GetInt("Resolution", _resolutionDefault);
-            if (resolution == _allowedResolutions.Count - 1)
+            if (resolution >= _allowedResolutions.Count - 1)
                 resolution = 0;
             else
                 resolution++;

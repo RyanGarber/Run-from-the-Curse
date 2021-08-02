@@ -47,6 +47,7 @@ MonoBehaviour:
   - GameStartedRPC
   - BlindedRPC
   - FireBulletRPC
+  - DamageRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

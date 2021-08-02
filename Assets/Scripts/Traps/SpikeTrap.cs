@@ -14,26 +14,25 @@ namespace RyanGQ.RunOrDie.Traps
         public Rigidbody[] Spikes;
         public KillTrigger Trigger;
 
-        [PunRPC]
-        public override void Activate()
-        {
-            if (IsActivated)
-                return;
+        public override bool IsActivated => _activated;
+        private bool _activated = false;
 
-            IsActivated = true;
-            foreach(Rigidbody r in Spikes)
+        [PunRPC]
+        public override IEnumerator Activate()
+        {
+            _activated = true;
+
+            foreach (Rigidbody r in Spikes)
             {
                 r.useGravity = true;
             }
             if (GameManager.Singleton.Player.Sync.IsReaper)
-                StartCoroutine("ActivateCoroutine");
-        }
+            {
+                foreach (PlayerSync player in Trigger.Players)
+                    player.photonView.RPC("DieRPC", player.photonView.Owner);
+            }
 
-        private IEnumerator ActivateCoroutine()
-        {
-            yield return new WaitForSeconds(0.45f);
-            foreach (PlayerSync player in Trigger.Players)
-                player.photonView.RPC("DieRPC", player.photonView.Owner);
+            yield break;
         }
     }
 }

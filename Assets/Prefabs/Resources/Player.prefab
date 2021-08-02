@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1426690322}
   - component: {fileID: 1426690321}
   - component: {fileID: 1426690320}
+  - component: {fileID: 4608545665763629173}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -31,7 +32,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 6433253015632531684}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &1426690322
 Camera:
@@ -116,6 +117,19 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
+--- !u!114 &4608545665763629173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426690318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87be31e01d2d779479ba081325d2d84b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WallRaycast: {fileID: 2462904137814094239}
 --- !u!114 &2068382198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,6 +157,36 @@ MonoBehaviour:
   m_SynchronizeLayers:
   - SynchronizeType: 0
     LayerIndex: 0
+--- !u!1 &2087093148572096834
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2462904137814094239}
+  m_Layer: 0
+  m_Name: Wall Raycast
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2462904137814094239
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2087093148572096834}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.25, z: -3.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 6433253015632531684}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6842424108855707763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,6 +250,7 @@ Transform:
   m_Children:
   - {fileID: 1886375617832873762}
   - {fileID: 4259287119529145046}
+  - {fileID: 2462904137814094239}
   - {fileID: 1426690319}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -223,7 +268,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Body: {fileID: 4794173528599757084}
-  CameraTransform: {fileID: 1426690319}
+  Camera: {fileID: 4608545665763629173}
   Sync: {fileID: 0}
 --- !u!114 &1916614764116371711
 MonoBehaviour:
@@ -240,6 +285,7 @@ MonoBehaviour:
   GhostBody: {fileID: 1884252077434209958}
   ReaperBody: {fileID: 4259287119528849078}
   Animator: {fileID: 0}
+  Health: 100
 --- !u!54 &4794173528599757084
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -254,7 +300,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &3593552836459504841
 CapsuleCollider:

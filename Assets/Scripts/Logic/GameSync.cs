@@ -15,7 +15,7 @@ namespace RyanGQ.RunOrDie.Logic
     public class GameSync : MonoBehaviourPunCallbacks, IPunObservable
     {
         public BulletPool Pool;
-        public string Reaper;
+        public string ReaperID;
         public Dictionary<string, PlayerSync> Players = new Dictionary<string, PlayerSync>();
 
         private void Awake()
@@ -28,16 +28,31 @@ namespace RyanGQ.RunOrDie.Logic
             GameManager.Singleton.WaitingCard.SetActive(false);
             if(PhotonNetwork.IsMasterClient)
             {
+                ReaperID = PhotonNetwork.CurrentRoom.Players.ElementAt(Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount)).Value.UserId;
+                int nextSpawn = 0;
                 foreach (PhotonPlayer player in PhotonNetwork.CurrentRoom.Players.Values)
                 {
                     player.SetCustomProperties(new Hashtable()
+                        {
+                            ["Ready"] = "No"
+                        }
+                    );
+                    Vector3 position;
+                    Quaternion rotation;
+                    if(player.UserId == ReaperID)
                     {
-                        ["Ready"] = "No"
-                    });
+                        position = GameManager.Singleton.ReaperSpawn.position;
+                        rotation = GameManager.Singleton.ReaperSpawn.rotation;
+                    }
+                    else
+                    {
+                        position = GameManager.Singleton.GhostSpawns[nextSpawn].position;
+                        rotation = GameManager.Singleton.GhostSpawns[nextSpawn].rotation;
+                        nextSpawn = nextSpawn == GameManager.Singleton.GhostSpawns.Length - 1 ? 0 : (nextSpawn + 1);
+                    }
+                    photonView.RPC("SpawnRPC", player, ReaperID, position, rotation);
                 }
 
-                string reaper = PhotonNetwork.CurrentRoom.Players.ElementAt(Random.Range(0, PhotonNetwork.CurrentRoom.PlayerCount)).Value.UserId;
-                photonView.RPC("SpawnRPC", RpcTarget.AllBufferedViaServer, reaper);
             }
         }
 
@@ -53,14 +68,13 @@ namespace RyanGQ.RunOrDie.Logic
         }
 
         [PunRPC]
-        private void SpawnRPC(string reaperId)
+        private void SpawnRPC(string reaperId, Vector3 position, Quaternion rotation)
         {
-            Reaper = reaperId;
+            ReaperID = reaperId;
             PlayerController player;
-            Transform spawn = GetSpawn(PhotonNetwork.LocalPlayer.UserId == Reaper);
-            player = PhotonNetwork.Instantiate("Player", spawn.position, spawn.rotation).GetComponent<PlayerController>();
+            player = PhotonNetwork.Instantiate("Player", position, rotation).GetComponent<PlayerController>();
             player.enabled = true;
-            player.CameraTransform.gameObject.SetActive(true);
+            player.Camera.Enable();
             GameManager.Singleton.LobbyCamera.SetActive(false);
         }
 
@@ -78,7 +92,7 @@ namespace RyanGQ.RunOrDie.Logic
         private void GameEndedRPC(byte reasonCode)
         {
             GameEndReason reason = (GameEndReason)reasonCode;
-            GameManager.Singleton.Crosshair.SetActive(false);
+            GameManager.Singleton.Crosshair.gameObject.SetActive(false);
             GameManager.Singleton.WaitingCard.SetActive(true);
             switch(reason)
             {
@@ -112,17 +126,15 @@ namespace RyanGQ.RunOrDie.Logic
             }
         }
 
-        private Transform GetSpawn(bool reaper)
-        {
-            return reaper ? GameManager.Singleton.ReaperSpawn : GameManager.Singleton.GhostSpawns[Random.Range(0, GameManager.Singleton.GhostSpawns.Length)];
-        }
-
         public override void OnRoomPropertiesUpdate(Hashtable properties)
         {
             if (properties.ContainsKey("Started") && (string)properties["Started"] == "No")
                 if (PhotonNetwork.IsMasterClient)
                     PhotonNetwork.LoadLevel(0);
         }
+
+        public List<PlayerSync> Ghosts => Players.Values.Where(p => !p.IsReaper).ToList();
+        public PlayerSync Reaper => Players.Values.FirstOrDefault(p => p.IsReaper);
 
         public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
         {

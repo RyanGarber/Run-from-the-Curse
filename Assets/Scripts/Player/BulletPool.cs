@@ -22,7 +22,7 @@ namespace RyanGQ.RunOrDie.Player
             Bullets[_nextBullet].gameObject.SetActive(true);
             Bullets[_nextBullet].transform.position = position;
             Bullets[_nextBullet].transform.forward = direction;
-            Bullets[_nextBullet].Body.AddForce(direction * 50f, ForceMode.VelocityChange);
+            Bullets[_nextBullet].Body.AddForce(direction * 50f, ForceMode.Impulse);
             Bullets[_nextBullet].Fire(player);
             _nextBullet = _nextBullet == Bullets.Length - 1 ? 0 : (_nextBullet + 1);
         }
